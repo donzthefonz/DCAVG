@@ -33,11 +33,11 @@ def main(client):
             #bitcoin_price_usd = float(binance.get_binance_price('BTCUSDT')['price'])
             #bitcoin_price_eur = usd_to_eur(bitcoin_price_usd)
 
-            #check price of Bitcoin, buy in EUR
-            bitcoin_price_eur = float(exchange.get_price('BTCEUR')['price'])
-            bitcoin_price_usd = eur_to_usd(bitcoin_price_eur)
+            #check price of Bitcoin, buy in GBP
+            bitcoin_price_gbp = float(exchange.get_price('BTCGBP')['price'])
+            bitcoin_price_usd = gbp_to_usd(bitcoin_price_gbp)
 
-            buy_eur_per_day = users[user]['buy_eur_per_day']
+            buy_gbp_per_day = users[user]['buy_gbp_per_day']
             if users[user]['continue_from_last_day'] == True:
                 data_temp = pd.read_csv('./data.csv')
                 try:
@@ -51,18 +51,18 @@ def main(client):
                 btc_to_buy = users[user]['btc_to_buy']
 
             #calculate how many bitcoin to buy
-            btc_to_buy += round((buy_eur_per_day / bitcoin_price_eur),6)
-            btc_to_buy_value = btc_to_buy*bitcoin_price_eur
+            btc_to_buy += round((buy_gbp_per_day / bitcoin_price_gbp),6)
+            btc_to_buy_value = btc_to_buy*bitcoin_price_gbp
             print(btc_to_buy)
             print(btc_to_buy_value)
 
             #save load info
             transactTime = exchange.get_servertime()
-            save_load_info(transactTime, user, bitcoin_price_usd, bitcoin_price_eur, round((buy_eur_per_day / bitcoin_price_eur),6), round((buy_eur_per_day / bitcoin_price_eur),6)*bitcoin_price_usd, btc_to_buy)
+            save_load_info(transactTime, user, bitcoin_price_usd, bitcoin_price_gbp, round((buy_gbp_per_day / bitcoin_price_gbp),6), round((buy_gbp_per_day / bitcoin_price_gbp),6)*bitcoin_price_usd, btc_to_buy)
 
             #if amount_btc*price < 10 EUR
 
-            if btc_to_buy*bitcoin_price_eur < 10:
+            if btc_to_buy*bitcoin_price_gbp < 10:
                 #continue to next user
                 continue
             elif exchange_name == 'coinbase' and btc_to_buy < 0.001:
@@ -78,7 +78,7 @@ def main(client):
                     buy_info = exchange.buy_BTC('MARKET', btc_to_buy)
                     #reset btc_to_buy
                     btc_to_buy = 0
-                    save_buy_info(buy_info, user, bitcoin_price_eur, btc_to_buy, transactTime, exchange=exchange_name)
+                    save_buy_info(buy_info, user, bitcoin_price_gbp, btc_to_buy, transactTime, exchange=exchange_name)
                     message_str = """We just bough some Bitcoin for you!\nCheck your {} account.""".format(exchange_name.capitalize())
                     send_message_telegram(client, telegram_id, "User: {}\n".format(user) + message_str)
                 except Exception as e:

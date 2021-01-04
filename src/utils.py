@@ -22,7 +22,7 @@ def send_message_telegram(client, user_id, output):
     #client.send_file(entity=entity,file='screenshot.png',caption=output)
     client.send_message(entity=entity,message=output)
 
-def save_buy_info(buy_info, user, bitcoin_price_eur, btc_to_buy, transactTime, exchange='binance'):
+def save_buy_info(buy_info, user, bitcoin_price_gbp, btc_to_buy, transactTime, exchange='binance'):
 
     if exchange == 'binance':
         orderId = buy_info['orderId']
@@ -32,7 +32,7 @@ def save_buy_info(buy_info, user, bitcoin_price_eur, btc_to_buy, transactTime, e
         quantity_usd = eur_to_usd(buy_info['cummulativeQuoteQty'])
         commission_btc = buy_info['fills'][0]['commission']
         #price_usd = buy_info['fills'][0]['price']
-        price_usd = eur_to_usd(bitcoin_price_eur)
+        price_usd = gbp_to_usd(bitcoin_price_gbp)
         tradeId = buy_info['fills'][0]['tradeId']
         status = 'completed'
 
@@ -42,31 +42,31 @@ def save_buy_info(buy_info, user, bitcoin_price_eur, btc_to_buy, transactTime, e
         #transactTime = buy_info['created_at'].values[0]
         quantity_btc = buy_info['size'].values[0]
         quantity_usd = buy_info['usd_volume'].values[0]
-        commission_btc = float(buy_info['fee'].values[0]) / bitcoin_price_eur
-        price_usd = eur_to_usd(bitcoin_price_eur)
+        commission_btc = float(buy_info['fee'].values[0]) / bitcoin_price_gbp
+        price_usd = gbp_to_usd(bitcoin_price_gbp)
         tradeId = buy_info['trade_id'].values[0]
         status = 'completed'
 
-    output = (transactTime, user, quantity_btc, quantity_usd, commission_btc, price_usd, bitcoin_price_eur, btc_to_buy, orderId, clientOrderId, status)
+    output = (transactTime, user, quantity_btc, quantity_usd, commission_btc, price_usd, bitcoin_price_gbp, btc_to_buy, orderId, clientOrderId, status)
     data = pd.read_csv('./data.csv')
 
     df = pd.DataFrame(output).T
     df.columns = ['transactTime', "user", "quantity_btc", "quantity_usd", "commission_btc",
-              'price_usd', "bitcoin_price_eur", "total_btc", "orderId", "clientOrderId", "status"]
+              'price_usd', "bitcoin_price_gbp", "total_btc", "orderId", "clientOrderId", "status"]
 
     data = data.append(df, sort=False)
     data.to_csv('./data.csv', index=False)
 
 
-def save_load_info(transactTime, user, bitcoin_price_usd, bitcoin_price_eur, quantity_btc, quantity_usd, btc_to_buy):
+def save_load_info(transactTime, user, bitcoin_price_usd, bitcoin_price_gbp, quantity_btc, quantity_usd, btc_to_buy):
     status = 'postponed'
 
-    output = (transactTime, user, quantity_btc, quantity_usd, 0, bitcoin_price_usd, bitcoin_price_eur, btc_to_buy, 0, 0, status)
+    output = (transactTime, user, quantity_btc, quantity_usd, 0, bitcoin_price_usd, bitcoin_price_gbp, btc_to_buy, 0, 0, status)
     data = pd.read_csv('./data.csv')
 
     df = pd.DataFrame(output).T
     df.columns = ['transactTime', "user", "quantity_btc", "quantity_usd", "commission_btc",
-              'price_usd', "bitcoin_price_eur", "total_btc", "orderId", "clientOrderId", "status"]
+              'price_usd', "bitcoin_price_gbp", "total_btc", "orderId", "clientOrderId", "status"]
 
     data = data.append(df, sort=False)
     data.to_csv('./data.csv', index=False)
@@ -89,6 +89,15 @@ def eur_to_usd(eur):
 
     exchange_rate_1eur_eqto = float(dic['rates']['USD'])
     return float(eur) * exchange_rate_1eur_eqto
+
+def gbp_to_usd(gbp):
+    url_gbpusd = "https://api.exchangeratesapi.io/latest"
+    response = requests.get(url_gbpusd)
+    soup = BeautifulSoup(response.content, "html.parser")
+    dic = json.loads(soup.prettify())
+
+    exchange_rate_1gbp_eqto = float(dic['rates']['USD'])
+    return float(gbp) * exchange_rate_1gbp_eqto
 
 #check the time, snapshot needs to be taken at around 00:00 UTC
 def is_time_between(begin_time, end_time, check_time=None):
@@ -114,7 +123,7 @@ def create_excel(user, status):
     df['date'] = df['transactTime'].apply(lambda x: datetime.fromtimestamp(int(str(x)[:-3])).strftime('%Y-%m-%d %H:%M:%S'))
     df = df.set_index('date')
     df['total_btc_value'] = df['total_btc'] * df['price_usd']
-    df3 = df[['user','quantity_btc', 'quantity_usd', 'price_usd', 'bitcoin_price_eur', 'total_btc', 'total_btc_value', 'status']]
+    df3 = df[['user','quantity_btc', 'quantity_usd', 'price_usd', 'bitcoin_price_gbp', 'total_btc', 'total_btc_value', 'status']]
 
 
     user_df = df3[df3['user'] == user]
@@ -122,34 +131,34 @@ def create_excel(user, status):
 
 
     columns = ['quantity_btc',
-           'bitcoin_price_eur',
+           'bitcoin_price_gbp',
            'price_usd']
 
     #df_excel = df_excel[columns][::-1]
     df_excel = df_excel[columns]
-    df_excel.columns = ['Paid (BTC)', 'BTC Price (EUR)', 'BTC Price (USD)']
+    df_excel.columns = ['Paid (BTC)', 'BTC Price (GBP)', 'BTC Price (USD)']
 
-    df_excel['Exchange In (EUR)'] = df_excel['Paid (BTC)'] * df_excel['BTC Price (EUR)']
+    df_excel['Exchange In (GBP)'] = df_excel['Paid (BTC)'] * df_excel['BTC Price (GBP)']
     df_excel['Balance (BTC)'] = df_excel['Paid (BTC)'].cumsum()
-    df_excel['Paid (EUR)'] = df_excel['Exchange In (EUR)'].cumsum()
-    df_excel['Balance (EUR)'] = df_excel['Balance (BTC)'] * df_excel['BTC Price (EUR)']
+    df_excel['Paid (GBP)'] = df_excel['Exchange In (GBP)'].cumsum()
+    df_excel['Balance (GBP)'] = df_excel['Balance (BTC)'] * df_excel['BTC Price (GBP)']
     df_excel['Balance (USD)'] = df_excel['Balance (BTC)'] * df_excel['BTC Price (USD)']
-    df_excel['Average Price Bought (EUR)'] = df_excel['Paid (EUR)'] / df_excel['Balance (BTC)']
-    df_excel['Average Price Bought (USD)'] = df_excel['Average Price Bought (EUR)'] * (df_excel['BTC Price (USD)'] / df_excel['BTC Price (EUR)'])
-    df_excel['Profit/Loss (EUR)'] = df_excel['Balance (EUR)'] - df_excel['Paid (EUR)']
-    df_excel['Profit/Loss Percentage'] = df_excel['Profit/Loss (EUR)'] / df_excel['Paid (EUR)']
+    df_excel['Average Price Bought (GBP)'] = df_excel['Paid (GBP)'] / df_excel['Balance (BTC)']
+    df_excel['Average Price Bought (USD)'] = df_excel['Average Price Bought (GBP)'] * (df_excel['BTC Price (USD)'] / df_excel['BTC Price (GBP)'])
+    df_excel['Profit/Loss (GBP)'] = df_excel['Balance (GBP)'] - df_excel['Paid (GBP)']
+    df_excel['Profit/Loss Percentage'] = df_excel['Profit/Loss (GBP)'] / df_excel['Paid (GBP)']
 
     cols = ['Paid (BTC)',
-        'Exchange In (EUR)',
-        'Paid (EUR)',
+        'Exchange In (GBP)',
+        'Paid (GBP)',
         'Balance (BTC)',
-        'Balance (EUR)',
+        'Balance (GBP)',
         'Balance (USD)',
-        'BTC Price (EUR)',
+        'BTC Price (GBP)',
         'BTC Price (USD)',
-        'Average Price Bought (EUR)',
+        'Average Price Bought (GBP)',
         'Average Price Bought (USD)',
-        'Profit/Loss (EUR)',
+        'Profit/Loss (GBP)',
         'Profit/Loss Percentage'
     ]
 
