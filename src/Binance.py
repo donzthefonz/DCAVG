@@ -87,7 +87,7 @@ class Binance():
             'timeInForce': 'GTC',
             'quantity': quantity,
             'price': price,
-            'recvWindow': 5000,
+            'recvWindow': 50000,
             'timestamp': timestamp,
         }
 
@@ -108,7 +108,7 @@ class Binance():
 
     def buy_BTC(self, Type, quantity, price = 0):
         #symbol = 'BTCUSDT'
-        symbol = 'BTCEUR'
+        symbol = 'BTCGBP'
         side = 'BUY'
 
         if Type == 'MARKET': order_data = self.create_binance_order(symbol, side, Type, quantity)

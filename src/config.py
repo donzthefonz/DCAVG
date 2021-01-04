@@ -1,11 +1,15 @@
 import pandas as pd
+import os
+dir = os.getcwd() + "/src"
+print(dir)
+os.chdir(dir)
 
 users = {}
 users_df = pd.read_csv('./users.csv')
 
 for user in users_df['username']:
     users[user] = {}
-    users[user]['buy_eur_per_day'] = users_df[users_df['username'] == user]['buy_eur_per_day'].values[0]
+    users[user]['buy_gbp_per_day'] = users_df[users_df['username'] == user]['buy_gbp_per_day'].values[0]
     #set true if you want to get the amount of BTC to buy from the amount saved on data.csv
     users[user]['continue_from_last_day'] = users_df[users_df['username'] == user]['continue_from_last_day'].values[0]
     users[user]['btc_to_buy'] = users_df[users_df['username'] == user]['btc_to_buy'].values[0]

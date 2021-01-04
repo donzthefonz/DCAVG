@@ -91,7 +91,7 @@ def eur_to_usd(eur):
     return float(eur) * exchange_rate_1eur_eqto
 
 def gbp_to_usd(gbp):
-    url_gbpusd = "https://api.exchangeratesapi.io/latest"
+    url_gbpusd = "https://api.exchangeratesapi.io/latest?base=GBP"
     response = requests.get(url_gbpusd)
     soup = BeautifulSoup(response.content, "html.parser")
     dic = json.loads(soup.prettify())

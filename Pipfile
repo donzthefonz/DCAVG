@@ -7,6 +7,9 @@ name = "pypi"
 numpy = "*"
 pandas = "*"
 bs4 = "*"
+cbpro = "*"
+telethon = "*"
+retrying = "*"
 
 [dev-packages]
 

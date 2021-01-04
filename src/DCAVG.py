@@ -11,12 +11,14 @@ from config import users
 from utils import *
 
 
+
 def main(client):
     #wait 1 day
     #tm.sleep(60*60*24)
 
     #buy at 5PM to 5:30PM UTC, check here if it is time to buy
     is_it_time = is_time_between(time(17,59), time(18,30))
+    is_it_time = True
 
     #if is it time to buy, proceed
     if is_it_time:
@@ -53,8 +55,8 @@ def main(client):
             #calculate how many bitcoin to buy
             btc_to_buy += round((buy_gbp_per_day / bitcoin_price_gbp),6)
             btc_to_buy_value = btc_to_buy*bitcoin_price_gbp
-            print(btc_to_buy)
-            print(btc_to_buy_value)
+            print('btc to buy: ' + str(btc_to_buy))
+            print('btc value to buy £: ' + str(btc_to_buy_value))
 
             #save load info
             transactTime = exchange.get_servertime()
@@ -63,14 +65,20 @@ def main(client):
             #if amount_btc*price < 10 EUR
 
             if btc_to_buy*bitcoin_price_gbp < 10:
+                print('Buy quantity not enough.')
+                message_str = """Buy quantity was too small to purchase. \nCheck your {} account.""".format(exchange_name.capitalize())
+                send_message_telegram(client, telegram_id, "User: {}\n".format(user) + message_str)
                 #continue to next user
                 continue
             elif exchange_name == 'coinbase' and btc_to_buy < 0.001:
+                print('Buy quantity not enough.')
+                message_str = """Buy quantity was too small to purchase. \nCheck your {} account.""".format(exchange_name.capitalize())
+                send_message_telegram(client, telegram_id, "User: {}\n".format(user) + message_str)
                 #continue to next user
                 continue
             else:
                 #buy bitcoin
-                btc_to_buy = round(btc_to_buy,6)
+                btc_to_buy = round(btc_to_buy, 6)
                 print(btc_to_buy)
 
 
@@ -110,7 +118,8 @@ def main(client):
 exchange_dict = {}
 telegram_id_dict = {}
 
-client = TelegramClient('DCAVG_session', api_id, api_hash).start()
+client = TelegramClient('DCAVG_session', api_id, api_hash)
+client.start()
 
 for user in users:
     API_KEY = users[user]['API_KEY']
